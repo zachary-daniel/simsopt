@@ -1,3 +1,5 @@
+import sys
+import os
 import numpy as np
 import warnings
 from scipy.io import netcdf_file
@@ -6,6 +8,13 @@ from simsopt.field.magneticfieldclasses import WindingSurfaceField
 from simsopt.geo import SurfaceRZFourier
 from simsopt.field.currentpotential import CurrentPotentialFourier
 import simsoptpp as sopp
+thincurr_python_path = os.getenv('OFT_ROOTPATH')
+thincurr_python_path = os.getenv('OFT_ROOTPATH')
+if thincurr_python_path is not None:
+    sys.path.append(os.path.join(thincurr_python_path,'python'))
+from OpenFUSIONToolkit import OFT_env
+from OpenFUSIONToolkit.ThinCurr import ThinCurr
+from OpenFUSIONToolkit.ThinCurr.meshing import build_regcoil_grid, ThinCurr_periodic_toroid
 
 __all__ = ["CurrentPotentialSolve"]
 
@@ -449,6 +458,7 @@ class CurrentPotentialSolve:
 
         # least-squares solve
         phi_mn_opt = np.linalg.solve(B_matrix + lam * K_matrix, b_rhs + lam * K_rhs) #adding constraints to B matrix
+        
         #Check the sizes of B and K. Also check how K_matrix is defined, and how it is shaped
         self.current_potential.set_dofs(phi_mn_opt)
 

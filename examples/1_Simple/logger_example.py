@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import logging
-from simsopt.util.log import initialize_logging
+from simsopt.util.logger import initialize_logging
 
 """
 Example file for transparently logging both MPI and serial jobs

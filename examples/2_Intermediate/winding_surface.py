@@ -77,7 +77,7 @@ def run_scan():
             net_poloidal_current_amperes=cp.net_poloidal_current_amperes,
             net_toroidal_current_amperes=cp.net_toroidal_current_amperes,
             stellsym=True)
-        cpst = CurrentPotentialSolve(cp, cpst.plasma_surface, cpst.Bnormal_plasma, cpst.B_GI)
+        cpst = CurrentPotentialSolve(cp, cpst.plasma_surface, cpst.Bnormal_plasma)# This throws an error. Only requires 3 argsCurrentPotentialSolve(cp, cpst.plasma_surface, cpst.Bnormal_plasma, cpst.B_GI)
 
         # define a number of geometric quantities from the plasma and coil surfaces
         s_coil = cpst.winding_surface
@@ -304,7 +304,10 @@ def run_target():
 
     for file in files:
         filename = TEST_DIR / file
-
+#What is cp and cpst and why are we reusing them
+#Need a current potential from Thincurr. One is a plasma surface, and one is the winding surface.
+#What is plasma surface, what is it using in terms of currentpotential solve. 
+#Need to generalize away from fourier representation 
         # Load in low-resolution NCSX file from REGCOIL
         cpst = CurrentPotentialSolve.from_netcdf(
             filename, plasma_ntheta_res, plasma_nzeta_res, coil_ntheta_res, coil_nzeta_res
@@ -317,7 +320,7 @@ def run_target():
             net_poloidal_current_amperes=cp.net_poloidal_current_amperes,
             net_toroidal_current_amperes=cp.net_toroidal_current_amperes,
             stellsym=True)
-        cpst = CurrentPotentialSolve(cp, cpst.plasma_surface, cpst.Bnormal_plasma, cpst.B_GI)
+        cpst = CurrentPotentialSolve(cp, cpst.plasma_surface, cpst.Bnormal_plasma)
         s_coil = cpst.winding_surface
 
         nfp = s_coil.nfp
@@ -337,7 +340,7 @@ def run_target():
         contig = np.ascontiguousarray
 
         # Loop through wide range of regularization values
-        lambdas = np.flip(np.logspace(-22, -10, 2))
+        lambdas = np.flip(np.logspace(-22, -10, 1))
         for i, lambda_reg in enumerate(lambdas):
             # Solve the REGCOIL problem that uses Tikhonov regularization (L2 norm)
             optimized_phi_mn, f_B, _ = cpst.solve_tikhonov(lam=lambda_reg)
@@ -370,7 +373,7 @@ def run_target():
         print('Now repeating for Lasso: ')
         for i, lambda_reg in enumerate(lambdas):
             # Solve the REGCOIL problem with the Lasso 
-            optimized_phi_mn, f_B, _, fB_history, _ = cpst.solve_lasso(lam=lambda_reg, max_iter=5000, acceleration=True)
+            optimized_phi_mn, f_B, _, fB_history, _ = cpst.solve_lasso(lam=lambda_reg, max_iter=1, acceleration=True)
             print(i, lambda_reg, f_B)
             cp_opt = cpst.current_potential
 
@@ -380,10 +383,13 @@ def run_target():
                 plt.ylabel('fB')
                 plt.xlabel('Iterations')
                 plt.grid(True)
+                
                 K = contig(cp_opt.K())
                 print('fB < fB_target has been achieved: ')
                 print('f_B from Lasso = ', f_B)
                 print('lambda = ', lambda_reg)
+                plt.savefig('run_target.jpg')
+                plt.show()
                 make_Bnormal_plots(
                     cpst, 
                     OUT_DIR, 
@@ -408,6 +414,7 @@ def run_target():
 # Run one of the functions and time it
 t1 = time.time()
 # run_scan()
+
 run_target()
 t2 = time.time()
 print('Total run time = ', t2 - t1)
